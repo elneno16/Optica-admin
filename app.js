@@ -13,6 +13,7 @@ let calDate = new Date();   // month displayed in calendar
 let selectedPhotoB64 = '';  // base64 of chosen photo
 
 const STORAGE_KEY = 'optica-admin-records';
+const GOOGLE_APP_URL = 'https://script.google.com/macros/s/AKfycbxY5KTxz2iwyezUBJgFybho0Uu3FdOi0lDU3zKGZEGHpHRfk2_Bkab1Eu59OAbo7BH-/exec';
 
 // ─── INIT ───────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -24,11 +25,29 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ─── STORAGE ────────────────────────────────────
-function loadRecords() {
+async function loadRecords() {
   try {
     records = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    renderStats();
+    renderTable();
   } catch {
     records = [];
+  }
+  
+  // Fetch from Google Sheets in background
+  try {
+    showToast('🔄 Sincronizando con Google Sheets...', '');
+    const res = await fetch(GOOGLE_APP_URL);
+    const data = await res.json();
+    if (data && Array.isArray(data)) {
+      records = data; // use Sheets as the absolute source of truth
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      renderStats();
+      renderTable();
+      showToast('✅ Sincronizado correctamente', 'success');
+    }
+  } catch(e) {
+    console.warn("Offline or error syncing: ", e);
   }
 }
 function saveRecords() {
@@ -314,14 +333,24 @@ function openDetail(id) {
   document.getElementById('detailBody').innerHTML = html;
 
   // Wire buttons
-  document.getElementById('detailDelete').onclick = () => {
+  document.getElementById('detailDelete').onclick = async () => {
     if (confirm('¿Eliminar este registro?')) {
       records = records.filter(r => r.id !== id);
       saveRecords();
       renderStats();
       renderTable();
       closeDetail();
-      showToast('Registro eliminado', 'error');
+      showToast('🗑️ Eliminando en nube...', '');
+      
+      try {
+        await fetch(GOOGLE_APP_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "delete", id: id })
+        });
+        showToast('✅ Registro eliminado', 'success');
+      } catch(e) {
+        showToast('⚠️ Borrado localmente (sin internet)', 'error');
+      }
     }
   };
   document.getElementById('detailEdit').onclick = () => {
@@ -339,7 +368,7 @@ function closeDetail() {
 }
 
 // ─── SAVE RECORD ────────────────────────────────
-function saveRecord() {
+async function saveRecord() {
   const type   = document.getElementById('recordType').value;
   const fecha  = document.getElementById('fieldFecha').value;
   const cliente= document.getElementById('fieldCliente').value.trim();
@@ -386,7 +415,23 @@ function saveRecord() {
   renderStats();
   renderTable();
   closeModal();
-  showToast(editingId ? '✏️ Registro actualizado' : '✅ Registro guardado', 'success');
+  showToast(editingId ? '✏️ Local actualizado, guardando en nube...' : '✅ Local guardado, subiendo a nube...', '');
+
+  // Push to Google Sheets
+  try {
+    const res = await fetch(GOOGLE_APP_URL, {
+      method: 'POST',
+      body: JSON.stringify(record)
+    });
+    const ans = await res.json();
+    if(ans.status === "success") {
+      showToast('✅ Sincronizado en la nube', 'success');
+    } else {
+      showToast('⚠️ Hubo un error en la nube', 'error');
+    }
+  } catch(e) {
+    showToast('⚠️ Guardado localmente (sin conexión)', 'error');
+  }
 }
 
 // ─── COPY ROW ─────────────────────────────────────
@@ -669,7 +714,7 @@ function bindEvents() {
   document.getElementById('deleteManagerOverlay').addEventListener('click', e => {
     if (e.target.id === 'deleteManagerOverlay') closeDeleteManager();
   });
-  document.getElementById('deleteManagerBody').addEventListener('click', e => {
+  document.getElementById('deleteManagerBody').addEventListener('click', async e => {
     const btn = e.target.closest('.btn-delete-client');
     if (!btn) return;
     const id  = btn.dataset.id;
@@ -685,7 +730,17 @@ function bindEvents() {
       renderStats();
       renderTable();
       closeDeleteManager();
-      showToast(`🗑️ Registro de "​${cliente}"​ eliminado`, 'error');
+      showToast('🗑️ Eliminando en nube...', '');
+      
+      try {
+        await fetch(GOOGLE_APP_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "delete", id: id })
+        });
+        showToast(`✅ Registro de "​${cliente}"​ eliminado`, 'success');
+      } catch(ex) {
+        showToast('⚠️ Borrado localmente (sin internet)', 'error');
+      }
     }
   });
 
