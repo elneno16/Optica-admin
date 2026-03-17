@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Óptica Admin — Panel de Registros</title>
+  <meta name="description" content="Panel de registros diarios para optometrista: exámenes visuales y ventas de monturas." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ───── HEADER ───── -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo-wrap">
+        <div class="logo-icon">👁️</div>
+        <div>
+          <h1 class="logo-title">Óptica Admin</h1>
+          <span class="logo-sub">Panel de Registros Diarios</span>
+        </div>
+      </div>
+      <div class="header-date" id="headerDate"></div>
+    </div>
+  </header>
+
+  <!-- ───── BUSCADOR ───── -->
+  <section class="search-section">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Buscar por cliente, WhatsApp, referencia…" autocomplete="off" />
+      <button class="btn-clear-search" id="btnClearSearch" title="Limpiar">✕</button>
+    </div>
+  </section>
+
+  <!-- ───── BOTONES PRINCIPALES ───── -->
+  <section class="main-actions">
+    <button class="main-btn btn-exam" id="btnExam">
+      <div class="main-btn-icon">🔬</div>
+      <div>
+        <div class="main-btn-title">Registro Examen Visual</div>
+        <div class="main-btn-sub">Fórmula óptica + venta</div>
+      </div>
+    </button>
+    <button class="main-btn btn-sale" id="btnSale">
+      <div class="main-btn-icon">🕶️</div>
+      <div>
+        <div class="main-btn-title">Registro Venta de Montura</div>
+        <div class="main-btn-sub">Producto + pago</div>
+      </div>
+    </button>
+  </section>
+
+  <!-- ───── ESTADÍSTICAS ───── -->
+  <section class="stats-bar">
+    <div class="stat-card">
+      <span class="stat-num" id="statTotal">0</span>
+      <span class="stat-label">Total Registros</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num" id="statExams">0</span>
+      <span class="stat-label">Exámenes Visuales</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num" id="statSales">0</span>
+      <span class="stat-label">Ventas Montura</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num" id="statToday">0</span>
+      <span class="stat-label">Registros Hoy</span>
+    </div>
+  </section>
+
+  <!-- ───── TABLA DE REGISTROS ───── -->
+  <section class="records-section">
+    <div class="records-header">
+      <h2 class="records-title">📋 Registros</h2>
+      <div class="records-header-btns">
+        <button class="btn-export" id="btnExport">📤 Exportar CSV</button>
+        <button class="btn-delete-manager" id="btnDeleteManager" title="Gestionar eliminación de clientes">🗑️</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="records-table" id="recordsTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Tipo</th>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>WhatsApp</th>
+            <th>Producto</th>
+            <th>Precio</th>
+            <th>Abono</th>
+            <th>Saldo</th>
+            <th>Copiar</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="recordsBody">
+          <tr class="empty-row" id="emptyRow">
+            <td colspan="11">
+              <div class="empty-state">
+                <div class="empty-icon">📂</div>
+                <p>No hay registros aún.<br/>Usa los botones de arriba para empezar.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ───── MODAL FORMULARIO ───── -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <div class="modal-type-badge" id="modalTypeBadge"></div>
+        <h2 class="modal-title" id="modalTitle">Nuevo Registro</h2>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="registryForm" novalidate>
+          <input type="hidden" id="recordId" />
+          <input type="hidden" id="recordType" />
+
+          <!-- FECHA -->
+          <div class="form-group">
+            <label for="fieldFecha">📅 Fecha <span class="req">*</span></label>
+            <div class="date-input-wrap">
+              <input type="text" id="fieldFecha" placeholder="DD/MM/AAAA" readonly class="date-field" required />
+              <button type="button" class="btn-calendar" id="btnCalendar">📅 Seleccionar fecha</button>
+            </div>
+            <div class="calendar-popup" id="calendarPopup">
+              <div class="cal-nav">
+                <button type="button" id="calPrev">‹</button>
+                <span id="calMonthYear"></span>
+                <button type="button" id="calNext">›</button>
+              </div>
+              <div class="cal-days-header">
+                <span>Dom</span><span>Lun</span><span>Mar</span>
+                <span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
+              </div>
+              <div class="cal-grid" id="calGrid"></div>
+            </div>
+          </div>
+
+          <!-- CLIENTE -->
+          <div class="form-group">
+            <label for="fieldCliente">👤 Cliente <span class="req">*</span></label>
+            <input type="text" id="fieldCliente" placeholder="Nombre completo del cliente" required />
+          </div>
+
+          <!-- WHATSAPP -->
+          <div class="form-group">
+            <label for="fieldWA">📱 WhatsApp</label>
+            <input type="tel" id="fieldWA" placeholder="Ej: +57 300 123 4567" />
+          </div>
+
+          <!-- FOTO -->
+          <div class="form-group">
+            <label>📷 Foto del cliente o producto <span class="optional">(Opcional)</span></label>
+            <div class="photo-area" id="photoArea">
+              <div class="photo-placeholder" id="photoPlaceholder">
+                <button type="button" class="btn-photo" id="btnPhoto">
+                  <span class="photo-plus">＋</span>
+                  <span class="photo-label">Foto</span>
+                  <span class="photo-opt">Opcional</span>
+                </button>
+                <p class="photo-hint">📱 Cámara &nbsp;·&nbsp; 🖼 Galería / PC</p>
+              </div>
+              <img id="photoPreview" class="photo-preview" src="" alt="Vista previa" style="display:none;" />
+              <button type="button" class="btn-remove-photo" id="btnRemovePhoto" style="display:none;">✕ Quitar foto</button>
+            </div>
+            <input type="file" id="photoInput" accept="image/*" style="display:none;" />
+          </div>
+
+          <!-- OJO D — solo examen visual -->
+          <div class="form-group exam-only">
+            <label for="fieldOjoD">👁 Ojo Derecho (OD)</label>
+            <input type="text" id="fieldOjoD" placeholder="Ej: -150-075-180" maxlength="40" class="eye-field" />
+            <small class="field-hint">Los dígitos se separan automáticamente cada 3 con " - "</small>
+          </div>
+
+          <!-- OJO I — solo examen visual -->
+          <div class="form-group exam-only">
+            <label for="fieldOjoI">👁 Ojo Izquierdo (OI)</label>
+            <input type="text" id="fieldOjoI" placeholder="Ej: -200-100-90" maxlength="40" class="eye-field" />
+            <small class="field-hint">Los dígitos se separan automáticamente cada 3 con " - "</small>
+          </div>
+
+          <!-- DP — solo examen visual -->
+          <div class="form-group exam-only">
+            <label for="fieldDP">📐 DP (Distancia Pupilar)</label>
+            <input type="text" id="fieldDP" placeholder="Ej: 63 mm" maxlength="20" />
+          </div>
+
+          <!-- REF -->
+          <div class="form-group">
+            <label for="fieldRef">🔖 Ref</label>
+            <input type="text" id="fieldRef" placeholder="Código o número de referencia" maxlength="100" />
+          </div>
+
+          <!-- PRODUCTO -->
+          <div class="form-group">
+            <label for="fieldProducto">📦 Producto <span class="req">*</span></label>
+            <textarea id="fieldProducto" placeholder="Descripción del producto (luna, montura, tipo de vidrio, marca…)" maxlength="1000" rows="3" required></textarea>
+            <small class="char-counter"><span id="cntProducto">0</span>/1000 caracteres</small>
+          </div>
+
+          <!-- DESCRIPCION -->
+          <div class="form-group">
+            <label for="fieldDesc">🗒 Descripción</label>
+            <textarea id="fieldDesc" placeholder="Detalles adicionales del servicio o producto" rows="3" maxlength="2000"></textarea>
+          </div>
+
+          <!-- PRECIO / ABONO -->
+          <div class="price-row">
+            <div class="form-group">
+              <label for="fieldPrecio">💰 Precio</label>
+              <input type="number" id="fieldPrecio" placeholder="0.00" min="0" step="0.01" />
+            </div>
+            <div class="form-group">
+              <label for="fieldAbono">💵 Abono</label>
+              <input type="number" id="fieldAbono" placeholder="0.00" min="0" step="0.01" />
+            </div>
+          </div>
+
+          <!-- PAGO COMPLETO -->
+          <div class="form-group">
+            <label>✅ Pago completo</label>
+            <div class="toggle-wrap">
+              <label class="toggle">
+                <input type="checkbox" id="fieldPagoCompleto" />
+                <span class="slider"></span>
+              </label>
+              <span class="toggle-label" id="pagoLabel">Pago incompleto</span>
+            </div>
+            <div class="saldo-display" id="saldoDisplay">Saldo pendiente: $0.00</div>
+          </div>
+
+          <!-- NOTA -->
+          <div class="form-group">
+            <label for="fieldNota">📝 Nota</label>
+            <textarea id="fieldNota" placeholder="Observaciones, recomendaciones, próximas citas o cualquier nota importante…" rows="7" maxlength="5000"></textarea>
+            <small class="char-counter"><span id="cntNota">0</span>/5000 caracteres</small>
+          </div>
+
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" id="btnCancel">Cancelar</button>
+        <button type="button" class="btn-save" id="btnSave">💾 Guardar Registro</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── MODAL DETALLE ───── -->
+  <div class="modal-overlay" id="detailOverlay">
+    <div class="modal modal-detail" id="detailModal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="detailTitle">Detalle del Registro</h2>
+        <button class="modal-close" id="detailClose">✕</button>
+      </div>
+      <div class="modal-body" id="detailBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-danger" id="detailDelete">🗑 Eliminar</button>
+        <button type="button" class="btn-save" id="detailEdit">✏️ Editar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── MODAL ELIMINAR CLIENTES ───── -->
+  <div class="modal-overlay" id="deleteManagerOverlay">
+    <div class="modal modal-delete-manager" id="deleteManagerModal">
+      <div class="modal-header">
+        <h2 class="modal-title">🗑️ Eliminar Registro de Cliente</h2>
+        <button class="modal-close" id="deleteManagerClose">✕</button>
+      </div>
+      <div class="modal-body" id="deleteManagerBody">
+        <!-- Lista de clientes generada por JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
