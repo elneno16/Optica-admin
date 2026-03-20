@@ -7,7 +7,7 @@ const SHEET_NAME = 'Registros';
 
 // Columnas EN ORDEN — deben coincidir exactamente con las cabeceras de la hoja
 const COLUMNS = [
-  'id', 'type', 'fecha', 'cliente', 'edad', 'whatsapp',
+  'id', 'type', 'fecha', 'cliente', 'whatsapp',
   'ojoD', 'ojoI', 'dp', 'ref', 'producto', 'descripcion',
   'precio', 'abono', 'pagoCompleto', 'nota', 'foto',
   'createdAt', 'updatedAt'
@@ -34,11 +34,6 @@ function doGet(e) {
           // Normalize booleans
           if (val === 'TRUE' || val === true)  val = true;
           if (val === 'FALSE' || val === false) val = false;
-          // Normalize edad: always a clean integer string
-          if (h === 'edad') {
-            const n = parseInt(String(val).replace(/[^0-9]/g, ''), 10);
-            val = isNaN(n) ? '' : String(n);
-          }
           obj[h] = (val === null || val === undefined) ? '' : val;
         });
         return obj;
@@ -74,12 +69,6 @@ function doPost(e) {
     const data     = sheet.getDataRange().getValues();
     const ids      = data.slice(1).map(r => String(r[0]));
     const rowIndex = ids.indexOf(String(payload.id));
-
-    // Normalizar edad antes de guardar
-    if (payload.edad !== undefined) {
-      const n = parseInt(String(payload.edad).replace(/[^0-9]/g, ''), 10);
-      payload.edad = isNaN(n) ? '' : String(n);
-    }
 
     const rowData = COLUMNS.map(col => {
       const val = payload[col];

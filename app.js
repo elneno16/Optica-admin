@@ -13,7 +13,7 @@ let calDate = new Date();   // month displayed in calendar
 let selectedPhotoB64 = '';  // base64 of chosen photo
 
 const STORAGE_KEY = 'optica-admin-records';
-const GOOGLE_APP_URL = 'https://script.google.com/macros/s/AKfycbz_ZfS1aUwuvccNcZsmX714DMWclWR3w1d5fy0YpC7Vqp2DzID2tEqr_0J7NzDQAnw/exec';
+const GOOGLE_APP_URL = 'https://script.google.com/macros/s/AKfycbyHJOIla5ZQMekf1zyyLXxPJXMQ7SlIM0aRneChXz5bNSKfeok5hYLP73k6syCEFcg0/exec';
 
 // ─── INIT ───────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -46,11 +46,6 @@ async function loadRecords() {
           const day = String(d.getUTCDate()).padStart(2, '0');
           const month = String(d.getUTCMonth() + 1).padStart(2, '0');
           r.fecha = `${day}/${month}/${d.getUTCFullYear()}`;
-        }
-        // Normalize edad: remove decimals and non-numeric chars (e.g. "35.0" → "35")
-        if (r.edad !== undefined && r.edad !== null && r.edad !== '') {
-          const parsedEdad = parseInt(String(r.edad).replace(/[^0-9]/g, ''), 10);
-          r.edad = isNaN(parsedEdad) ? '' : String(parsedEdad);
         }
         return r;
       }); // use Sheets as the absolute source of truth
@@ -115,7 +110,6 @@ function renderTable(filtered) {
       }</td>
       <td>${rec.fecha || '—'}</td>
       <td>${esc(rec.cliente) || '—'}</td>
-      <td>${rec.edad ? esc(rec.edad) + ' Años' : '—'}</td>
       <td>${rec.whatsapp ? `<a href="https://wa.me/${String(rec.whatsapp).replace(/\D/g,'')}" target="_blank" style="color:#25d366;text-decoration:none;">📱 ${esc(rec.whatsapp)}</a>` : '—'}</td>
       <td class="td-product">${esc(truncate(rec.producto, 50)) || '—'}</td>
       <td>${precio ? '$' + precio.toLocaleString('es-CO') : '—'}</td>
@@ -203,49 +197,6 @@ function formatDate(d) {
   return `${day}/${month}/${year}`;
 }
 
-// ─── EDAD SLIDER ────────────────────────────────
-function updateEdadSlider(val) {
-  const n      = parseInt(val, 10);
-  const bubble = document.getElementById('edadBubble');
-  const slider = document.getElementById('fieldEdad');
-  const min    = parseInt(slider.min, 10);
-  const max    = parseInt(slider.max, 10);
-
-  if (isNaN(n)) {
-    bubble.textContent = '—';
-    bubble.style.left = '50%';
-    return;
-  }
-
-  bubble.textContent = n + ' Años';
-
-  // Position bubble responsively using % + calc (to adjust for thumb width offset)
-  const percent = (n - min) / (max - min);
-  // Bubble is 38px min-width. Thumb is 22px.
-  // Using calc to shift the bubble so it stays centered relative to thumb
-  bubble.style.left = `calc(${percent * 100}% + (${11 - percent * 22}px))`;
-
-  // Update progress track color
-  const pct = percent * 100;
-  slider.style.background = `linear-gradient(to right, #3b82f6 ${pct}%, var(--border) ${pct}%)`;
-}
-
-function setEdadSlider(value) {
-  const n      = parseInt(String(value).replace(/[^0-9]/g, ''), 10);
-  const slider = document.getElementById('fieldEdad');
-  const bubble = document.getElementById('edadBubble');
-  if (!slider) return;
-  if (isNaN(n) || n < 1) {
-    slider.value           = 1;
-    slider.style.background = 'var(--border)';
-    bubble.textContent     = '—';
-    bubble.style.left      = '50%';
-  } else {
-    slider.value = Math.min(Math.max(n, 1), 100);
-    updateEdadSlider(slider.value);
-  }
-}
-
 // ─── EYE FORMULA AUTO-FORMAT ────────────────────
 // Input digits (and +/-) → every 3 digits get separated by " - "
 function formatEyeField(val) {
@@ -279,7 +230,7 @@ function openModal(type, record) {
 
   // Reset custom UI elements
   if (type === 'exam') {
-    setEdadSlider(''); // Clear age slider UI
+    // 
   }
 
   // Fill if editing
@@ -294,7 +245,6 @@ function openModal(type, record) {
     setValue('fieldAbono',   record.abono);
     setValue('fieldNota',    record.nota);
     if (type === 'exam') {
-      setEdadSlider(record.edad);
       setValue('fieldOjoD', record.ojoD);
       setValue('fieldOjoI', record.ojoI);
       setValue('fieldDP',   record.dp);
@@ -330,8 +280,7 @@ function openModal(type, record) {
 
   // Re-run age slider update after modal is visible to fix layout/width issues
   if (type === 'exam') {
-    const val = record ? record.edad : '';
-    setEdadSlider(val);
+    //
   }
 
   calDate = new Date();
@@ -372,7 +321,6 @@ function openDetail(id) {
   html += field('WhatsApp', rec.whatsapp ? `<a href="https://wa.me/${String(rec.whatsapp).replace(/\D/g,'')}" target="_blank" style="color:#25d366">📱 ${esc(rec.whatsapp)}</a>` : '');
 
   if (rec.type === 'exam') {
-    html += field('Edad', rec.edad ? esc(rec.edad) + ' años' : '');
     html += field('Ojo Derecho (OD)', rec.ojoD ? `<span class="detail-formula">${esc(rec.ojoD)}</span>` : '');
     html += field('Ojo Izquierdo (OI)', rec.ojoI ? `<span class="detail-formula">${esc(rec.ojoI)}</span>` : '');
     html += field('DP', rec.dp);
@@ -465,12 +413,6 @@ async function saveRecord() {
   };
 
   if (type === 'exam') {
-    const sliderEl  = document.getElementById('fieldEdad');
-    const sliderVal = parseInt(sliderEl.value, 10);
-    // Only save if the bubble shows a real number (not the default '—')
-    const bubble    = document.getElementById('edadBubble');
-    const hasValue  = bubble && bubble.textContent !== '—';
-    record.edad = (hasValue && !isNaN(sliderVal) && sliderVal >= 1) ? String(sliderVal) : '';
     record.ojoD = document.getElementById('fieldOjoD').value.trim();
     record.ojoI = document.getElementById('fieldOjoI').value.trim();
     record.dp   = document.getElementById('fieldDP').value.trim();
@@ -520,7 +462,6 @@ function copyRowToClipboard(id) {
     `📱 WhatsApp:    ${rec.whatsapp || '—'}`,
   ];
   if (rec.type === 'exam') {
-    lines.push(`🎂 Edad:        ${rec.edad ? rec.edad + ' Años' : '—'}`);
     lines.push(`👁 Ojo D (OD):  ${rec.ojoD || '—'}`);
     lines.push(`👁 Ojo I (OI):  ${rec.ojoI || '—'}`);
     lines.push(`📐 DP:          ${rec.dp || '—'}`);
@@ -586,13 +527,13 @@ function closeDeleteManager() {
 // ─── EXPORT CSV ─────────────────────────────────
 function exportCSV() {
   if (records.length === 0) { showToast('No hay registros para exportar', 'error'); return; }
-  const headers = ['Tipo','Fecha','Cliente','Edad','WhatsApp','Ojo D','Ojo I','DP','Ref','Producto','Descripcion','Precio','Abono','Pago Completo','Saldo','Nota'];
+  const headers = ['Tipo','Fecha','Cliente','WhatsApp','Ojo D','Ojo I','DP','Ref','Producto','Descripcion','Precio','Abono','Pago Completo','Saldo','Nota'];
   const rows = records.map(r => {
     const precio = parseFloat(r.precio) || 0;
     const abono  = parseFloat(r.abono) || 0;
     return [
       r.type === 'exam' ? 'Examen Visual' : 'Venta Montura',
-      r.fecha, r.cliente, r.edad || '', r.whatsapp,
+      r.fecha, r.cliente, r.whatsapp,
       r.ojoD || '', r.ojoI || '', r.dp || '',
       r.ref, r.producto, r.descripcion,
       precio, abono,

@@ -95,7 +95,6 @@
             <th>Tipo</th>
             <th>Fecha</th>
             <th>Cliente</th>
-            <th>Edad</th>
             <th>WhatsApp</th>
             <th>Producto</th>
             <th>Precio</th>
@@ -157,21 +156,6 @@
           <div class="form-group">
             <label for="fieldCliente">👤 Cliente <span class="req">*</span></label>
             <input type="text" id="fieldCliente" placeholder="Nombre completo del cliente" required />
-          </div>
-
-          <!-- EDAD — solo examen visual -->
-          <div class="form-group exam-only">
-            <label for="fieldEdad">🎂 Edad</label>
-            <div class="edad-slider-wrap">
-              <div class="edad-bubble" id="edadBubble">—</div>
-              <input type="range" id="fieldEdad" min="1" max="100" step="1"
-                     class="edad-slider" value="0"
-                     oninput="updateEdadSlider(this.value)" />
-              <div class="edad-range-labels">
-                <span>1</span><span>25</span><span>50</span><span>75</span><span>100</span>
-              </div>
-              <input type="hidden" id="fieldEdadVal" />
-            </div>
           </div>
 
           <!-- WHATSAPP -->
@@ -265,7 +249,7 @@
           <!-- NOTA -->
           <div class="form-group">
             <label for="fieldNota">📝 Nota</label>
-            <textarea id="fieldNota" placeholder="Observaciones, recomendaciones, próximas citas o cualquier nota importante…" rows="7" maxlength="5000"></textarea>
+            <textarea id="fieldNota" placeholder="Ejemplo: Edad 44 años. Observaciones, recomendaciones, próximas citas o cualquier nota importante…" rows="7" maxlength="5000"></textarea>
             <small class="char-counter"><span id="cntNota">0</span>/5000 caracteres</small>
           </div>
 
