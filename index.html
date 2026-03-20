@@ -95,6 +95,7 @@
             <th>Tipo</th>
             <th>Fecha</th>
             <th>Cliente</th>
+            <th>Edad</th>
             <th>WhatsApp</th>
             <th>Producto</th>
             <th>Precio</th>
@@ -106,7 +107,7 @@
         </thead>
         <tbody id="recordsBody">
           <tr class="empty-row" id="emptyRow">
-            <td colspan="11">
+            <td colspan="12">
               <div class="empty-state">
                 <div class="empty-icon">📂</div>
                 <p>No hay registros aún.<br/>Usa los botones de arriba para empezar.</p>
@@ -156,6 +157,12 @@
           <div class="form-group">
             <label for="fieldCliente">👤 Cliente <span class="req">*</span></label>
             <input type="text" id="fieldCliente" placeholder="Nombre completo del cliente" required />
+          </div>
+
+          <!-- EDAD — solo examen visual -->
+          <div class="form-group exam-only">
+            <label for="fieldEdad">🎂 Edad</label>
+            <input type="number" id="fieldEdad" placeholder="Ej: 35" min="0" max="120" />
           </div>
 
           <!-- WHATSAPP -->

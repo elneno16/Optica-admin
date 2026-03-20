@@ -102,6 +102,7 @@ function renderTable(filtered) {
       }</td>
       <td>${rec.fecha || '—'}</td>
       <td>${esc(rec.cliente) || '—'}</td>
+      <td>${rec.edad ? esc(rec.edad) : '—'}</td>
       <td>${rec.whatsapp ? `<a href="https://wa.me/${rec.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:#25d366;text-decoration:none;">📱 ${esc(rec.whatsapp)}</a>` : '—'}</td>
       <td class="td-product">${esc(truncate(rec.producto, 50)) || '—'}</td>
       <td>${precio ? '$' + precio.toLocaleString('es-CO') : '—'}</td>
@@ -113,7 +114,14 @@ function renderTable(filtered) {
           : '—'
       }</td>
       <td><button class="btn-row-copy" data-id="${rec.id}" title="Copiar datos de esta fila">📋 Copiar</button></td>
-      <td><button class="btn-row-view" data-id="${rec.id}">Ver detalle</button></td>
+      <td>
+        <div class="action-btns">
+          <button class="btn-row-view" data-id="${rec.id}">Ver detalle</button>
+          <button class="btn-row-edit" data-id="${rec.id}" title="Editar registro">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+          </button>
+        </div>
+      </td>
     `;
     tbody.appendChild(tr);
   });
@@ -237,6 +245,7 @@ function openModal(type, record) {
     setValue('fieldAbono',   record.abono);
     setValue('fieldNota',    record.nota);
     if (type === 'exam') {
+      setValue('fieldEdad', record.edad);
       setValue('fieldOjoD', record.ojoD);
       setValue('fieldOjoI', record.ojoI);
       setValue('fieldDP',   record.dp);
@@ -307,6 +316,7 @@ function openDetail(id) {
   html += field('WhatsApp', rec.whatsapp ? `<a href="https://wa.me/${rec.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:#25d366">📱 ${esc(rec.whatsapp)}</a>` : '');
 
   if (rec.type === 'exam') {
+    html += field('Edad', rec.edad ? esc(rec.edad) + ' años' : '');
     html += field('Ojo Derecho (OD)', rec.ojoD ? `<span class="detail-formula">${esc(rec.ojoD)}</span>` : '');
     html += field('Ojo Izquierdo (OI)', rec.ojoI ? `<span class="detail-formula">${esc(rec.ojoI)}</span>` : '');
     html += field('DP', rec.dp);
@@ -399,6 +409,7 @@ async function saveRecord() {
   };
 
   if (type === 'exam') {
+    record.edad = document.getElementById('fieldEdad').value.trim();
     record.ojoD = document.getElementById('fieldOjoD').value.trim();
     record.ojoI = document.getElementById('fieldOjoI').value.trim();
     record.dp   = document.getElementById('fieldDP').value.trim();
@@ -448,6 +459,7 @@ function copyRowToClipboard(id) {
     `📱 WhatsApp:    ${rec.whatsapp || '—'}`,
   ];
   if (rec.type === 'exam') {
+    lines.push(`🎂 Edad:        ${rec.edad || '—'}`);
     lines.push(`👁 Ojo D (OD):  ${rec.ojoD || '—'}`);
     lines.push(`👁 Ojo I (OI):  ${rec.ojoI || '—'}`);
     lines.push(`📐 DP:          ${rec.dp || '—'}`);
@@ -513,13 +525,13 @@ function closeDeleteManager() {
 // ─── EXPORT CSV ─────────────────────────────────
 function exportCSV() {
   if (records.length === 0) { showToast('No hay registros para exportar', 'error'); return; }
-  const headers = ['Tipo','Fecha','Cliente','WhatsApp','Ojo D','Ojo I','DP','Ref','Producto','Descripcion','Precio','Abono','Pago Completo','Saldo','Nota'];
+  const headers = ['Tipo','Fecha','Cliente','Edad','WhatsApp','Ojo D','Ojo I','DP','Ref','Producto','Descripcion','Precio','Abono','Pago Completo','Saldo','Nota'];
   const rows = records.map(r => {
     const precio = parseFloat(r.precio) || 0;
     const abono  = parseFloat(r.abono) || 0;
     return [
       r.type === 'exam' ? 'Examen Visual' : 'Venta Montura',
-      r.fecha, r.cliente, r.whatsapp,
+      r.fecha, r.cliente, r.edad || '', r.whatsapp,
       r.ojoD || '', r.ojoI || '', r.dp || '',
       r.ref, r.producto, r.descripcion,
       precio, abono,
@@ -706,6 +718,12 @@ function bindEvents() {
     if (btnView) { openDetail(btnView.dataset.id); return; }
     const btnCopy = e.target.closest('.btn-row-copy');
     if (btnCopy) { copyRowToClipboard(btnCopy.dataset.id); return; }
+    const btnEdit = e.target.closest('.btn-row-edit');
+    if (btnEdit) { 
+      const rec = records.find(r => r.id === btnEdit.dataset.id);
+      if (rec) openModal(rec.type, rec);
+      return; 
+    }
   });
 
   // Delete manager

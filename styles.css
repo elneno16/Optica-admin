@@ -392,6 +392,31 @@ body {
 }
 .btn-row-view:hover { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,.06); }
 
+.action-btns {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.btn-row-edit {
+  background: rgba(59,130,246,.1);
+  border: 1px solid rgba(59,130,246,.3);
+  color: #3b82f6;
+  border-radius: var(--radius-sm);
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.btn-row-edit:hover {
+  background: rgba(59,130,246,.2);
+  border-color: #3b82f6;
+  transform: scale(1.08);
+}
+.btn-row-edit:active { transform: scale(.95); }
+
 .empty-state {
   display: flex;
   flex-direction: column;
