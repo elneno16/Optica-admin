@@ -203,23 +203,54 @@ function formatDate(d) {
   return `${day}/${month}/${year}`;
 }
 
+// ─── EDAD SLIDER ────────────────────────────────
+function updateEdadSlider(val) {
+  const n      = parseInt(val, 10);
+  const bubble = document.getElementById('edadBubble');
+  const slider = document.getElementById('fieldEdad');
+  const min    = parseInt(slider.min, 10);
+  const max    = parseInt(slider.max, 10);
+
+  if (isNaN(n)) {
+    bubble.textContent = '—';
+    bubble.style.left = '50%';
+    return;
+  }
+
+  bubble.textContent = n + ' Años';
+
+  // Position bubble responsively using % + calc (to adjust for thumb width offset)
+  const percent = (n - min) / (max - min);
+  // Bubble is 38px min-width. Thumb is 22px.
+  // Using calc to shift the bubble so it stays centered relative to thumb
+  bubble.style.left = `calc(${percent * 100}% + (${11 - percent * 22}px))`;
+
+  // Update progress track color
+  const pct = percent * 100;
+  slider.style.background = `linear-gradient(to right, #3b82f6 ${pct}%, var(--border) ${pct}%)`;
+}
+
+function setEdadSlider(value) {
+  const n      = parseInt(String(value).replace(/[^0-9]/g, ''), 10);
+  const slider = document.getElementById('fieldEdad');
+  const bubble = document.getElementById('edadBubble');
+  if (!slider) return;
+  if (isNaN(n) || n < 1) {
+    slider.value           = 1;
+    slider.style.background = 'var(--border)';
+    bubble.textContent     = '—';
+    bubble.style.left      = '50%';
+  } else {
+    slider.value = Math.min(Math.max(n, 1), 100);
+    updateEdadSlider(slider.value);
+  }
+}
+
 // ─── EYE FORMULA AUTO-FORMAT ────────────────────
 // Input digits (and +/-) → every 3 digits get separated by " - "
 function formatEyeField(val) {
-  // Keep only digits, +, -, .
-  let clean = val.replace(/[^0-9+\-.]/g, '');
-
-  // Split on separator characters to get segments
-  // Strategy: collect sequences of digits (with optional leading sign)
-  const raw = val.replace(/\s/g, ''); // remove spaces
-  // Split by the user-typed separators: we allow the user to type raw digits
-  // We detect groups of 3 consecutive digits and insert separator
-
-  // Remove all existing " - " separators first (from previous formatting)
   let stripped = val.replace(/ - /g, '');
-  // Now group: split on natural separators (+/-) but keep them
-  // Approach: every run of 3+ digits gets a separator between each 3-digit chunk
-  let result = stripped.replace(/(\d{3})(?=\d)/g, '$1 - ');
+  let result   = stripped.replace(/(\d{3})(?=\d)/g, '$1 - ');
   return result;
 }
 
@@ -246,6 +277,11 @@ function openModal(type, record) {
   document.getElementById('recordId').value   = record ? record.id : '';
   document.getElementById('recordType').value = type;
 
+  // Reset custom UI elements
+  if (type === 'exam') {
+    setEdadSlider(''); // Clear age slider UI
+  }
+
   // Fill if editing
   if (record) {
     setValue('fieldFecha',   record.fecha);
@@ -258,7 +294,7 @@ function openModal(type, record) {
     setValue('fieldAbono',   record.abono);
     setValue('fieldNota',    record.nota);
     if (type === 'exam') {
-      setValue('fieldEdad', record.edad);
+      setEdadSlider(record.edad);
       setValue('fieldOjoD', record.ojoD);
       setValue('fieldOjoI', record.ojoI);
       setValue('fieldDP',   record.dp);
@@ -291,6 +327,13 @@ function openModal(type, record) {
   // Open
   document.getElementById('modalOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+
+  // Re-run age slider update after modal is visible to fix layout/width issues
+  if (type === 'exam') {
+    const val = record ? record.edad : '';
+    setEdadSlider(val);
+  }
+
   calDate = new Date();
   renderCalendar();
 }
@@ -422,9 +465,12 @@ async function saveRecord() {
   };
 
   if (type === 'exam') {
-    const edadRaw = document.getElementById('fieldEdad').value.trim();
-    const edadNum = parseInt(edadRaw.replace(/[^0-9]/g, ''), 10);
-    record.edad = isNaN(edadNum) ? '' : String(edadNum);
+    const sliderEl  = document.getElementById('fieldEdad');
+    const sliderVal = parseInt(sliderEl.value, 10);
+    // Only save if the bubble shows a real number (not the default '—')
+    const bubble    = document.getElementById('edadBubble');
+    const hasValue  = bubble && bubble.textContent !== '—';
+    record.edad = (hasValue && !isNaN(sliderVal) && sliderVal >= 1) ? String(sliderVal) : '';
     record.ojoD = document.getElementById('fieldOjoD').value.trim();
     record.ojoI = document.getElementById('fieldOjoI').value.trim();
     record.dp   = document.getElementById('fieldDP').value.trim();
