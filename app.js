@@ -103,7 +103,7 @@ function renderTable(filtered) {
       <td>${rec.fecha || '—'}</td>
       <td>${esc(rec.cliente) || '—'}</td>
       <td>${rec.edad ? esc(rec.edad) : '—'}</td>
-      <td>${rec.whatsapp ? `<a href="https://wa.me/${rec.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:#25d366;text-decoration:none;">📱 ${esc(rec.whatsapp)}</a>` : '—'}</td>
+      <td>${rec.whatsapp ? `<a href="https://wa.me/${String(rec.whatsapp).replace(/\D/g,'')}" target="_blank" style="color:#25d366;text-decoration:none;">📱 ${esc(rec.whatsapp)}</a>` : '—'}</td>
       <td class="td-product">${esc(truncate(rec.producto, 50)) || '—'}</td>
       <td>${precio ? '$' + precio.toLocaleString('es-CO') : '—'}</td>
       <td>${abono  ? '$' + abono.toLocaleString('es-CO')  : '—'}</td>
@@ -132,11 +132,11 @@ function doSearch(q) {
   if (!q.trim()) { renderTable(); return; }
   const lq = q.toLowerCase();
   const filtered = records.filter(r =>
-    (r.cliente || '').toLowerCase().includes(lq) ||
-    (r.whatsapp || '').toLowerCase().includes(lq) ||
-    (r.ref || '').toLowerCase().includes(lq) ||
-    (r.producto || '').toLowerCase().includes(lq) ||
-    (r.nota || '').toLowerCase().includes(lq)
+    (String(r.cliente || '')).toLowerCase().includes(lq) ||
+    (String(r.whatsapp || '')).toLowerCase().includes(lq) ||
+    (String(r.ref || '')).toLowerCase().includes(lq) ||
+    (String(r.producto || '')).toLowerCase().includes(lq) ||
+    (String(r.nota || '')).toLowerCase().includes(lq)
   );
   renderTable(filtered);
 }
@@ -313,7 +313,7 @@ function openDetail(id) {
   html += field('Tipo', rec.type === 'exam' ? '<span class="badge-exam">🔬 Examen Visual</span>' : '<span class="badge-sale">🕶️ Venta Montura</span>');
   html += field('Fecha', rec.fecha);
   html += field('Cliente', esc(rec.cliente), false);
-  html += field('WhatsApp', rec.whatsapp ? `<a href="https://wa.me/${rec.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:#25d366">📱 ${esc(rec.whatsapp)}</a>` : '');
+  html += field('WhatsApp', rec.whatsapp ? `<a href="https://wa.me/${String(rec.whatsapp).replace(/\D/g,'')}" target="_blank" style="color:#25d366">📱 ${esc(rec.whatsapp)}</a>` : '');
 
   if (rec.type === 'exam') {
     html += field('Edad', rec.edad ? esc(rec.edad) + ' años' : '');
