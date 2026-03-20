@@ -162,7 +162,10 @@
           <!-- EDAD — solo examen visual -->
           <div class="form-group exam-only">
             <label for="fieldEdad">🎂 Edad</label>
-            <input type="number" id="fieldEdad" placeholder="Ej: 35" min="0" max="120" />
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <input type="text" id="fieldEdad" placeholder="Ej: 35" maxlength="3" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" style="flex:1;" />
+              <span style="color:var(--text-muted); font-weight:500;">Años</span>
+            </div>
           </div>
 
           <!-- WHATSAPP -->

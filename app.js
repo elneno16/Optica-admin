@@ -40,7 +40,15 @@ async function loadRecords() {
     const res = await fetch(GOOGLE_APP_URL);
     const data = await res.json();
     if (data && Array.isArray(data)) {
-      records = data; // use Sheets as the absolute source of truth
+      records = data.map(r => {
+        if (typeof r.fecha === 'string' && r.fecha.includes('T')) {
+          const d = new Date(r.fecha);
+          const day = String(d.getUTCDate()).padStart(2, '0');
+          const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+          r.fecha = `${day}/${month}/${d.getUTCFullYear()}`;
+        }
+        return r;
+      }); // use Sheets as the absolute source of truth
       localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
       renderStats();
       renderTable();
@@ -102,7 +110,7 @@ function renderTable(filtered) {
       }</td>
       <td>${rec.fecha || '—'}</td>
       <td>${esc(rec.cliente) || '—'}</td>
-      <td>${rec.edad ? esc(rec.edad) : '—'}</td>
+      <td>${rec.edad ? esc(rec.edad) + ' Años' : '—'}</td>
       <td>${rec.whatsapp ? `<a href="https://wa.me/${String(rec.whatsapp).replace(/\D/g,'')}" target="_blank" style="color:#25d366;text-decoration:none;">📱 ${esc(rec.whatsapp)}</a>` : '—'}</td>
       <td class="td-product">${esc(truncate(rec.producto, 50)) || '—'}</td>
       <td>${precio ? '$' + precio.toLocaleString('es-CO') : '—'}</td>
@@ -459,7 +467,7 @@ function copyRowToClipboard(id) {
     `📱 WhatsApp:    ${rec.whatsapp || '—'}`,
   ];
   if (rec.type === 'exam') {
-    lines.push(`🎂 Edad:        ${rec.edad || '—'}`);
+    lines.push(`🎂 Edad:        ${rec.edad ? rec.edad + ' Años' : '—'}`);
     lines.push(`👁 Ojo D (OD):  ${rec.ojoD || '—'}`);
     lines.push(`👁 Ojo I (OI):  ${rec.ojoI || '—'}`);
     lines.push(`📐 DP:          ${rec.dp || '—'}`);
