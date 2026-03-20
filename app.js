@@ -47,6 +47,11 @@ async function loadRecords() {
           const month = String(d.getUTCMonth() + 1).padStart(2, '0');
           r.fecha = `${day}/${month}/${d.getUTCFullYear()}`;
         }
+        // Normalize edad: remove decimals and non-numeric chars (e.g. "35.0" → "35")
+        if (r.edad !== undefined && r.edad !== null && r.edad !== '') {
+          const parsedEdad = parseInt(String(r.edad).replace(/[^0-9]/g, ''), 10);
+          r.edad = isNaN(parsedEdad) ? '' : String(parsedEdad);
+        }
         return r;
       }); // use Sheets as the absolute source of truth
       localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
@@ -417,7 +422,9 @@ async function saveRecord() {
   };
 
   if (type === 'exam') {
-    record.edad = document.getElementById('fieldEdad').value.trim();
+    const edadRaw = document.getElementById('fieldEdad').value.trim();
+    const edadNum = parseInt(edadRaw.replace(/[^0-9]/g, ''), 10);
+    record.edad = isNaN(edadNum) ? '' : String(edadNum);
     record.ojoD = document.getElementById('fieldOjoD').value.trim();
     record.ojoI = document.getElementById('fieldOjoI').value.trim();
     record.dp   = document.getElementById('fieldDP').value.trim();
