@@ -13,7 +13,7 @@ let calDate = new Date();   // month displayed in calendar
 let selectedPhotoB64 = '';  // base64 of chosen photo
 
 const STORAGE_KEY = 'optica-admin-records';
-const GOOGLE_APP_URL = 'https://script.google.com/macros/s/AKfycbwe8MBLbgUbEgyaxNLr9NACif4t4oMEiKLebIDRAxmvFMkaugAhRBqe0UlrQlFiLZgr/exec';
+const GOOGLE_APP_URL = 'https://script.google.com/macros/s/AKfycbz_ZfS1aUwuvccNcZsmX714DMWclWR3w1d5fy0YpC7Vqp2DzID2tEqr_0J7NzDQAnw/exec';
 
 // ─── INIT ───────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
